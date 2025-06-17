@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Look Here!</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Comic Sans MS', cursive;
+      color: white;
+    }
+
+    h1 {
+      position: absolute;
+      top: 3vh;
+      width: 100%;
+      text-align: center;
+      font-size: 6vw;
+      z-index: 10;
+      color: #FFD700;
+      text-shadow: 2px 2px 10px #FF69B4;
+      animation: float 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-10px); }
+    }
+
+    .birthday-img {
+      position: absolute;
+      top: 20vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40vw;
+      max-width: 200px;
+      height: 40vw;
+      max-height: 200px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 0 20px #ff69b4, 0 0 30px #ff1493;
+      border: 4px solid #fff;
+      z-index: 9;
+    }
+
+    .wish-message {
+      position: absolute;
+      top: 56vh;
+      width: 100%;
+      text-align: center;
+      font-size: 4.5vw;
+      color: #ffccff;
+      text-shadow: 1px 1px 5px #ff66cc;
+      z-index: 9;
+      padding: 0 10px;
+      line-height: 1.4;
+    }
+
+    .cake {
+      position: absolute;
+      bottom: 10vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 45vw;
+      max-width: 200px;
+      height: 30vw;
+      max-height: 150px;
+      background: #8B4513;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 0 20px #FF6347;
+    }
+
+    .cake:before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 20%;
+      background: pink;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .candle {
+      position: absolute;
+      width: 6px;
+      height: 20px;
+      background: #fff;
+      top: -60px;
+      border-radius: 3px;
+      box-shadow: 0 0 5px #fff;
+      animation: glow 1s infinite alternate;
+    }
+
+    .candle:nth-child(1) { left: 20%; }
+    .candle:nth-child(2) { left: 45%; }
+    .candle:nth-child(3) { left: 70%; }
+
+    .flame {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 15px;
+      background: orange;
+      border-radius: 50%;
+      box-shadow: 0 0 20px yellow;
+      animation: flicker 0.3s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0% { transform: translateX(-50%) scale(1); }
+      100% { transform: translateX(-50%) scale(1.2); }
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 5px #fff; }
+      to { box-shadow: 0 0 15px #fff; }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 Happy Birthday! 🎂</h1>
+  <img src="img/pic.jpg" alt="Birthday Person" class="birthday-img" />
+  <div class="wish-message">
+    Wishing you a day filled with love, laughter, and unforgettable moments. 💖<br>
+    Happy Birthday Tulsiiiii 🌟 <br>
+    Lots of Love 💖 <br>
+    May God Bless You 🎉
+  </div>
+  <div class="cake">
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+  </div>
+  <canvas id="fireworks"></canvas>
+  <script>
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    class Firework {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height;
+        this.targetY = Math.random() * canvas.height / 2;
+        this.speed = 3 + Math.random() * 3;
+        this.exploded = false;
+        this.particles = [];
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+      }
+      update() {
+        if (!this.exploded) {
+          this.y -= this.speed;
+          if (this.y <= this.targetY) {
+            this.exploded = true;
+            for (let i = 0; i < 50; i++) {
+              this.particles.push(new Particle(this.x, this.y, this.color));
+            }
+          }
+        } else {
+          this.particles.forEach(p => p.update());
+        }
+      }
+      draw() {
+        if (!this.exploded) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        } else {
+          this.particles.forEach(p => p.draw());
+        }
+      }
+      isDone() {
+        return this.exploded && this.particles.every(p => p.alpha <= 0);
+      }
+    }
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = 2;
+        this.color = color;
+        this.speed = Math.random() * 5;
+        this.angle = Math.random() * Math.PI * 2;
+        this.alpha = 1;
+        this.fade = 0.02 + Math.random() * 0.02;
+      }
+      update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.alpha -= this.fade;
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    let fireworks = [];
+
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (Math.random() < 0.05) {
+        fireworks.push(new Firework());
+      }
+
+      fireworks.forEach((f, i) => {
+        f.update();
+        f.draw();
+        if (f.isDone()) fireworks.splice(i, 1);
+      });
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
